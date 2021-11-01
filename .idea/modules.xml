@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/svm-ddos-sdn.iml" filepath="$PROJECT_DIR$/.idea/svm-ddos-sdn.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/svm_ddos_sdn.iml" filepath="$PROJECT_DIR$/.idea/svm_ddos_sdn.iml" />
     </modules>
   </component>
 </project>

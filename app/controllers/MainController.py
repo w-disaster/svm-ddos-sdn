@@ -1,6 +1,8 @@
 import http.client
 import time
 import json
+
+from app.controllers.FeaturesController import FeaturesController
 from app.model.Features import Features
 from queue import Queue
 import pandas as pd
@@ -8,15 +10,17 @@ import csv
 import joblib
 import threading
 
-
+"""
+    MainController class.
+    This class 
+"""
 class MainController:
     def __init__(self, queue, period):
         self.queue = queue
         self.period = period
-        
+
     def run(self):
         dpid = "1"
-        n_flows = 0
         filename = '../controllers/model.sav'
         loaded_model = joblib.load(filename)
 
@@ -26,7 +30,7 @@ class MainController:
             conn = http.client.HTTPConnection("localhost", 8080)
             conn.request("GET", "/stats/flow/1")
             response = conn.getresponse()
-            print(response.status, response.reason)
+            #print(response.status, response.reason)
 
             if response.status == 200:
                 json_response = json.loads(response.read())
@@ -51,17 +55,19 @@ class MainController:
                         bytes_per_flow.append(json_response[dpid][k]["byte_count"])
                         n_ip_flows = n_ip_flows + 1
 
-                # Features
-                features = Features(src_ips=src_ips, dst_ips=dst_ips, n_packets_per_flow=n_packets_per_flow,
+                # Features controller
+                fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips, n_packets_per_flow=n_packets_per_flow,
                                     bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows, period=self.period)
-
+                # Features
+                features = fc.get_features()
                 # Write row into csv
-                row = [features.get_ssip(), features.get_sdfp(), features.get_sdfb(), features.get_sfe(),
-                       features.get_rfip()]
+                row = [features.get_ssip(), features.get_sdfp(), features.get_sdfb(),
+                       features.get_sfe(), features.get_rfip()]
 
                 # Update View
                 self.queue.put([("timestamp", time.time()), ("ssip", row[0]), ("sdfp", row[1]), ("sdfb", row[2]),
                                 ("sfe", row[3]), ("rfip", row[4])])
+
 
                 with open('live.csv', 'w') as datafile:
                     writer = csv.writer(datafile, delimiter=",")
@@ -109,7 +115,3 @@ class MainController:
                     print("normal")
 
             time.sleep(self.period)
-
-
-#if __name__ == "__main__":
-#    c = MainController()
