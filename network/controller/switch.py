@@ -109,7 +109,9 @@ class CustomController(app_manager.RyuApp):
         else:
             out_port = ofproto.OFPP_FLOOD
 
+
         actions = [parser.OFPActionOutput(out_port)]
+
 
         # install a flow to avoid packet_in next time
         if out_port != ofproto.OFPP_FLOOD:
@@ -124,6 +126,8 @@ class CustomController(app_manager.RyuApp):
                 # Default Match of Ryu: simple_switch_13 module
                 # match = parser.OFPMatch(in_port=in_port, eth_dst=dl_dst, eth_src=dl_src)
                 
+                actions.append(parser.OFPActionSetNwSrc(srcip))
+
                 # If ICMP Protocol
                 if protocol == in_proto.IPPROTO_ICMP:
                     icmp_info = pkt.get_protocol(icmp.icmp)
