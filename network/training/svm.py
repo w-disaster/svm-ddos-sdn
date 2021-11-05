@@ -10,9 +10,10 @@ dataset = pd.read_csv('Data.csv')
 X = dataset.iloc[:, [0, 1, 2, 3, 4]].values
 y = dataset.iloc[:, 5].values
 
+print(X.shape)
 # Splitting the dataset into the Training set and Test set
 from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
 
 # Feature Scaling
 from sklearn.preprocessing import StandardScaler
@@ -22,7 +23,7 @@ X_test = sc.transform(X_test)
 
 # Fitting SVM to the Training set
 from sklearn.svm import SVC
-classifier = SVC(kernel = 'linear', random_state = 0)
+classifier = SVC(kernel='linear', random_state=0)
 classifier.fit(X_train, y_train)
 
 # Predicting the Test set results

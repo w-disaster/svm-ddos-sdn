@@ -40,7 +40,7 @@ class FeaturesView:
             for f, v in features:
                 if f != "timestamp":
                     # Add subplot
-                    ax = self.fig.add_subplot(5, 1, i + 1)
+                    ax = self.fig.add_subplot(2, 3, i + 1)
                     ax.title.set_text(f.upper())
                     # Add feature in the features array and limit its size
                     self.f_arr[i].append(v)

@@ -4,12 +4,12 @@ from app.model.Features import Features
 
 
 class FeaturesController:
-    def __init__(self, src_ips, dst_ips, n_packets_per_flow, bytes_per_flow, n_ip_flows, period):
+    def __init__(self, src_ips, dst_ips, n_packets_per_flow, bytes_per_flow, n_flows, period):
         self.src_ips = src_ips
         self.dst_ips = dst_ips
         self.n_packets_per_flow = n_packets_per_flow
         self.bytes_per_flow = bytes_per_flow
-        self.n_ip_flows = n_ip_flows
+        self.n_flows = n_flows
         self.period = period
 
     def get_features(self):
