@@ -126,8 +126,6 @@ class CustomController(app_manager.RyuApp):
                 # Default Match of Ryu: simple_switch_13 module
                 # match = parser.OFPMatch(in_port=in_port, eth_dst=dl_dst, eth_src=dl_src)
                 
-                actions.append(parser.OFPActionSetNwSrc(srcip))
-
                 # If ICMP Protocol
                 if protocol == in_proto.IPPROTO_ICMP:
                     icmp_info = pkt.get_protocol(icmp.icmp)
@@ -171,6 +169,10 @@ class CustomController(app_manager.RyuApp):
                                             tcp_src=tcp_src,
                                             tcp_dst=tcp_dst,
                                             )
+
+                #actions.append(parser.OFPActionExperimenter(1))
+                #parser.OFPExperimenter(datapath, 1, data=srcip)
+
 
                 # verify if we have a valid buffer_id, if yes avoid to send both
                 # flow_mod & packet_out

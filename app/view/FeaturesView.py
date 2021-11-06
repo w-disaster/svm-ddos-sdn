@@ -15,7 +15,7 @@ class FeaturesView:
     def __init__(self):
         # Fields
         self.queue = Queue()
-        self.period = 3
+        self.period = 1
         self.t_arr = []
         self.f_arr = [[], [], [], [], []]
         self.fig = plt.figure(1)

@@ -1,0 +1,32 @@
+ # print(json.dumps(json_response, indent=4, sort_keys=True))
+                        for k in range(0, n_flows - 1):
+                            #if json_response[dpid][k]["match"]["nw_src"] not in normal_src_ips:
+                                # print(json.dumps(json_response, indent=4, sort_keys=True))
+                                # print(json.dumps(json_response[dpid][k], indent=4, sort_keys=True))
+
+                            # Drop all packets that match destination IP == 192.168.1.20
+                            if "match" in json_response[dpid][k]:
+                                if json_response[dpid][k]["match"]["nw_dst"] == '192.168.1.20':
+                                    filter_flows = json.dumps({
+                                        "dpid": 1,
+                                        #"cookie": json_response[dpid][k]["cookie"],
+                                        #"table_id": json_response[dpid][k]["table_id"],
+                                        #"idle_timeout": json_response[dpid][k]["idle_timeout"],
+                                        #"hard_timeout": json_response[dpid][k]["hard_timeout"],
+                                        #"priority": json_response[dpid][k]["priority"],
+                                        #"flags": json_response[dpid][k]["flags"],
+                                        "match": {
+                                            #"dl_dst": json_response[dpid][k]["match"]["dl_dst"],
+                                            #"dl_src": json_response[dpid][k]["match"]["dl_src"],
+                                            #"ipv4_src": json_response[dpid][k]["match"]["nw_src"],
+                                            "ipv4_dst": "192.168.1.20", #json_response[dpid][k]["match"]["nw_dst"],
+                                            #"in_port": json_response[dpid][k]["match"]["in_port"],
+                                            #"nw_proto": json_response[dpid][k]["match"]["nw_proto"],
+                                            "dl_type": json_response[dpid][k]["match"]["dl_type"],
+                                        },
+                                        # DROP
+                                        "actions": []
+                                    })
+
+                                    conn = http.client.HTTPConnection("localhost", 8080)
+                                    conn.request("POST", "/stats/flowentry/modify", filter_flows)

@@ -22,9 +22,8 @@ class MainController:
     def run(self):
         dpid = "1"
         filename = '../controllers/model.sav'
-        loaded_model = joblib.load(filename)
+        clf = joblib.load(filename)
 
-        header = ["SSIP", "Stdevpack", "Stdevbyte", "NbFlow", "NbIntFlow"]
         normal_src_ips = []
         while True:
             conn = http.client.HTTPConnection("localhost", 8080)
@@ -65,18 +64,12 @@ class MainController:
                     row = [features.get_ssip(), features.get_sdfp(), features.get_sdfb(),
                            features.get_sfe(), features.get_rfip()]
 
+                    # Predict result
+                    result = clf.predict([row])
+
                     # Update View
                     self.queue.put([("timestamp", time.time()), ("ssip", row[0]), ("sdfp", row[1]), ("sdfb", row[2]),
-                                    ("sfe", row[3]), ("rfip", row[4])])
-
-                    with open('live.csv', 'w') as datafile:
-                        writer = csv.writer(datafile, delimiter=",")
-                        writer.writerow(header)
-                        writer.writerow(row)
-
-                    dataset = pd.read_csv('live.csv').iloc[:].values
-                    print(dataset)
-                    result = loaded_model.predict(dataset)
+                                    ("sfe", row[3]), ("rfip", row[4]), ("class", result)])
 
                     if result[0] == 1:
                         print("ANOMALOUS")
