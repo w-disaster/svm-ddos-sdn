@@ -13,44 +13,31 @@ from mininet.cli import CLI
 from mininet.node import Controller
 from mininet.node import RemoteController
 from mininet.util import quietRun
-
+from mininet.node import CPULimitedHost
+from mininet.util import custom
 
 def myNetwork():
     info('Creating empty network..\n')
     net = Mininet(topo=None, build=False, link=TCLink)
     sw1 = net.addSwitch('sw1')
+    
     # Adding hosts
-    h1 = net.addHost('host1', ip='192.168.1.10/24')
-    h2 = net.addHost('host2', ip='192.168.1.20/24')
-    h3 = net.addHost('host3', ip='192.168.1.30/24')
-    h4 = net.addHost('host4', ip='192.168.1.40/24')
-    # Connecting hosts to switches and switch to switch
-    net.addLink(h1, sw1)
-    net.addLink(h2, sw1)
-    net.addLink(h3, sw1)
-    net.addLink(h4, sw1)
-
-    h1.setMAC("00:00:00:00:00:01", h1.name + "-eth0")
-    h2.setMAC("00:00:00:00:00:02", h2.name + "-eth0")
-    h3.setMAC("00:00:00:00:00:03", h3.name + "-eth0")
-    h4.setMAC("00:00:00:00:00:04", h4.name + "-eth0")
-
-    # for h in net.hosts:
-    #    print("disable ipv6")
-    #    h.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
-    #    h.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
-    #    h.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
-
-    # h.cmd("ping 192.168.1.40 &")
+    
+    for i in range(1, 6):
+        #h = net.addHost('host' + str(i), custom( CPULimitedHost, cpu=0.1), 
+        #        ip='137.204.0.' + str(i * 10) + '/24')
+        h = net.addHost('host' + str(i), 
+                ip='137.204.0.' + str(i * 10) + '/24')
+        net.addLink(h, sw1, bw=1, delay='50ms')
+        h.setMAC("00:00:00:00:00:0" + str(i), h.name + "-eth0")    
 
     # Connecting switches to external controller
     net.start()
     sw1.cmd('ovs-vsctl set-controller ' + sw1.name + ' tcp:127.0.0.1:6653')
-    # CLI(net)
-
+    
     for h in net.hosts:
-        if h.name != h4.name:
-            h.cmd("ping 192.168.1.40 &")
+        if h.name != "host2":
+            h.cmd("ping 137.204.0.20 &")
 
     CLI(net)
     net.stop()
