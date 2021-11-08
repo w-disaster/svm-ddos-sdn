@@ -1,4 +1,4 @@
-# Copyright (C) 2012 Nippon Telegraph and Telephone Corporation.
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ from ryu.lib import ofctl_v1_5
 from ryu.app.wsgi import ControllerBase
 from ryu.app.wsgi import Response
 from ryu.app.wsgi import WSGIApplication
+import threading 
 
 LOG = logging.getLogger('ryu.app.ofctl_rest')
 
@@ -44,145 +45,9 @@ supported_ofctl = {
     ofproto_v1_0.OFP_VERSION: ofctl_v1_0,
     ofproto_v1_2.OFP_VERSION: ofctl_v1_2,
     ofproto_v1_3.OFP_VERSION: ofctl_v1_3,
-    ofproto_v1_4.OFP_VERSION: ofctl_v1_4,
-    ofproto_v1_5.OFP_VERSION: ofctl_v1_5,
+    #ofproto_v1_4.OFP_VERSION: ofctl_v1_4,
+    #ofproto_v1_5.OFP_VERSION: ofctl_v1_5,
 }
-
-# REST API
-#
-
-# Retrieve the switch stats
-#
-# get the list of all switches
-# GET /stats/switches
-#
-# get the desc stats of the switch
-# GET /stats/desc/<dpid>
-#
-# get flows desc stats of the switch
-# GET /stats/flowdesc/<dpid>
-#
-# get flows desc stats of the switch filtered by the fields
-# POST /stats/flowdesc/<dpid>
-#
-# get flows stats of the switch
-# GET /stats/flow/<dpid>
-#
-# get flows stats of the switch filtered by the fields
-# POST /stats/flow/<dpid>
-#
-# get aggregate flows stats of the switch
-# GET /stats/aggregateflow/<dpid>
-#
-# get aggregate flows stats of the switch filtered by the fields
-# POST /stats/aggregateflow/<dpid>
-#
-# get table stats of the switch
-# GET /stats/table/<dpid>
-#
-# get table features stats of the switch
-# GET /stats/tablefeatures/<dpid>
-#
-# get ports stats of the switch
-# GET /stats/port/<dpid>[/<port>]
-# Note: Specification of port number is optional
-#
-# get queues stats of the switch
-# GET /stats/queue/<dpid>[/<port>[/<queue_id>]]
-# Note: Specification of port number and queue id are optional
-#       If you want to omitting the port number and setting the queue id,
-#       please specify the keyword "ALL" to the port number
-#       e.g. GET /stats/queue/1/ALL/1
-#
-# get queues config stats of the switch
-# GET /stats/queueconfig/<dpid>[/<port>]
-# Note: Specification of port number is optional
-#
-# get queues desc stats of the switch
-# GET /stats/queuedesc/<dpid>[/<port>[/<queue_id>]]
-# Note: Specification of port number and queue id are optional
-#       If you want to omitting the port number and setting the queue id,
-#       please specify the keyword "ALL" to the port number
-#       e.g. GET /stats/queuedesc/1/ALL/1
-#
-# get meter features stats of the switch
-# GET /stats/meterfeatures/<dpid>
-#
-# get meter config stats of the switch
-# GET /stats/meterconfig/<dpid>[/<meter_id>]
-# Note: Specification of meter id is optional
-#
-# get meter desc stats of the switch
-# GET /stats/meterdesc/<dpid>[/<meter_id>]
-# Note: Specification of meter id is optional
-#
-# get meters stats of the switch
-# GET /stats/meter/<dpid>[/<meter_id>]
-# Note: Specification of meter id is optional
-#
-# get group features stats of the switch
-# GET /stats/groupfeatures/<dpid>
-#
-# get groups desc stats of the switch
-# GET /stats/groupdesc/<dpid>[/<group_id>]
-# Note: Specification of group id is optional (OpenFlow 1.5 or later)
-#
-# get groups stats of the switch
-# GET /stats/group/<dpid>[/<group_id>]
-# Note: Specification of group id is optional
-#
-# get ports description of the switch
-# GET /stats/portdesc/<dpid>[/<port_no>]
-# Note: Specification of port number is optional (OpenFlow 1.5 or later)
-
-# Update the switch stats
-#
-# add a flow entry
-# POST /stats/flowentry/add
-#
-# modify all matching flow entries
-# POST /stats/flowentry/modify
-#
-# modify flow entry strictly matching wildcards and priority
-# POST /stats/flowentry/modify_strict
-#
-# delete all matching flow entries
-# POST /stats/flowentry/delete
-#
-# delete flow entry strictly matching wildcards and priority
-# POST /stats/flowentry/delete_strict
-#
-# delete all flow entries of the switch
-# DELETE /stats/flowentry/clear/<dpid>
-#
-# add a meter entry
-# POST /stats/meterentry/add
-#
-# modify a meter entry
-# POST /stats/meterentry/modify
-#
-# delete a meter entry
-# POST /stats/meterentry/delete
-#
-# add a group entry
-# POST /stats/groupentry/add
-#
-# modify a group entry
-# POST /stats/groupentry/modify
-#
-# delete a group entry
-# POST /stats/groupentry/delete
-#
-# modify behavior of the physical port
-# POST /stats/portdesc/modify
-#
-# modify role of controller
-# POST /stats/role
-#
-#
-# send a experimeter message
-# POST /stats/experimenter/<dpid>
-
 
 class CommandNotFoundError(RyuException):
     message = 'No such command : %(cmd)s'
@@ -502,16 +367,19 @@ class StatsController(ControllerBase):
 class RestStatsApi(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION,
                     ofproto_v1_2.OFP_VERSION,
-                    ofproto_v1_3.OFP_VERSION,
-                    ofproto_v1_4.OFP_VERSION,
-                    ofproto_v1_5.OFP_VERSION]
+                    ofproto_v1_3.OFP_VERSION]
+                    #ofproto_v1_4.OFP_VERSION,
+                    #ofproto_v1_5.OFP_VERSION]
     _CONTEXTS = {
         'dpset': dpset.DPSet,
         'wsgi': WSGIApplication
     }
 
     def __init__(self, *args, **kwargs):
-        super(RestStatsApi, self).__init__(*args, **kwargs)
+        t = threading.Thread(target=super(RestStatsApi, self).__init__,
+                args=args, kwargs=kwargs)
+        t.start()
+        #super(RestStatsApi, self).__init__(*args, **kwargs) 
         self.dpset = kwargs['dpset']
         wsgi = kwargs['wsgi']
         self.waiters = {}

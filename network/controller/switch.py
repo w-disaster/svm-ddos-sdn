@@ -13,11 +13,16 @@ from ryu.lib.packet import icmp
 from ryu.lib.packet import tcp
 from ryu.lib.packet import udp
 
+import threading
+
 class CustomController(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
-        super(CustomController, self).__init__(*args, **kwargs)
+        t = threading.Thread(target=super(CustomController, self).__init__,
+                args=args, kwargs=kwargs)
+        t.start()
+        #super(CustomController, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
     
     # From simple_switch_13
