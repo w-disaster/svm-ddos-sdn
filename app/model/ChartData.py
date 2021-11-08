@@ -1,4 +1,4 @@
-class PlotData:
+class ChartData:
     def __init__(self, timestamp, features, traffic):
         self.timestamp = timestamp
         self.features = features
