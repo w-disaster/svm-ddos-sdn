@@ -6,6 +6,7 @@ from app.controllers.FeaturesController import FeaturesController
 from app.controllers.SVMController import SVMController
 from app.controllers.State import State
 from app.model.ChartData import ChartData
+from app.model.Flow import Flow
 
 """
     DDOSController class.
@@ -22,10 +23,13 @@ class DDOSController:
         self.legit_src_ips = []
         self.state = State.NORMAL
         self.normal_period = self.period
-        self.anomalous_period = 20
+        self.anomalous_period = 21
+        self.fc = FeaturesController(self.period)
 
     def run(self):
         current_period = self.normal_period
+        self.read_flows()
+        time.sleep(self.period)
         while True:
             if self.state == State.NORMAL:
                 if current_period == self.normal_period:
@@ -39,7 +43,7 @@ class DDOSController:
                     # Read response
                     if response.status == 200:
                         flows_as_json = json.loads(response.read())
-                        #print(json.dumps(flows_as_json, indent=4, sort_keys=True))
+                        # print(json.dumps(flows_as_json, indent=4, sort_keys=True))
                     else:
                         flows_as_json = []
 
@@ -51,25 +55,38 @@ class DDOSController:
                         bytes_per_flow = []
                         n_ip_flows = 0
 
+                        flow_list = []
+
                         # Get flows info
                         for k in range(0, len(flows_as_json[self.dpid]) - 1):
                             if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
-                                src_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                                dst_ips.append(flows_as_json[self.dpid][k]["match"]["nw_dst"])
-                                n_packets_per_flow.append(flows_as_json[self.dpid][k]["packet_count"])
-                                bytes_per_flow.append(flows_as_json[self.dpid][k]["byte_count"])
+                                """src_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                                dst_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                                n_packets_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                                bytes_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
                                 n_ip_flows = n_ip_flows + 1
+                                """
+                                src_ip = flows_as_json[self.dpid][k]["match"]["nw_src"]
+                                dst_ip = flows_as_json[self.dpid][k]["match"]["nw_dst"]
+                                n_packets = flows_as_json[self.dpid][k]["packet_count"]
+                                n_bytes = flows_as_json[self.dpid][k]["byte_count"]
+
+                                # Append a new flow
+                                flow_list.append(Flow(src_ip, dst_ip, n_packets, n_bytes))
 
                         # If there are flows based on src ip
-                        if n_ip_flows > 0:
+                        if len(flow_list) > 0:
                             # Features controller
-                            fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips,
-                                                    n_packets_per_flow=n_packets_per_flow,
-                                                    bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows,
-                                                    period=self.period)
+                            # fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips,
+                            #                        n_packets_per_flow=n_packets_per_flow,
+                            #                        bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows,
+                            #                        period=self.period)
+
+                            self.fc.compute_period_flows(flow_list)
+
 
                             # Features object
-                            f = fc.get_features()
+                            f = self.fc.get_features()
                             # Get features
                             features = [f.get_ssip(), f.get_sdfp(), f.get_sdfb(), f.get_sfe(), f.get_rfip()]
                             print(features)
@@ -96,6 +113,58 @@ class DDOSController:
 
             time.sleep(self.period)
             current_period += self.period
+
+
+    def read_flows(self):
+        # Get all flows
+        conn = http.client.HTTPConnection("localhost", 8080)
+        conn.request("GET", "/stats/flow/1")
+        response = conn.getresponse()
+
+        # Read response
+        if response.status == 200:
+            flows_as_json = json.loads(response.read())
+            # print(json.dumps(flows_as_json, indent=4, sort_keys=True))
+        else:
+            flows_as_json = []
+
+        if len(flows_as_json) > 0:
+            # Clear variables
+            src_ips = []
+            dst_ips = []
+            n_packets_per_flow = []
+            bytes_per_flow = []
+            n_ip_flows = 0
+
+            flow_list = []
+
+            # Get flows info
+            for k in range(0, len(flows_as_json[self.dpid]) - 1):
+                if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
+                    """src_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                    dst_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                    n_packets_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                    bytes_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
+                    n_ip_flows = n_ip_flows + 1
+                    """
+                    src_ip = flows_as_json[self.dpid][k]["match"]["nw_src"]
+                    dst_ip = flows_as_json[self.dpid][k]["match"]["nw_dst"]
+                    n_packets = flows_as_json[self.dpid][k]["packet_count"]
+                    n_bytes = flows_as_json[self.dpid][k]["byte_count"]
+
+                    # Append a new flow
+                    flow_list.append(Flow(src_ip, dst_ip, n_packets, n_bytes))
+
+            # If there are flows based on src ip
+            if len(flow_list) > 0:
+                # Features controller
+                # fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips,
+                #                        n_packets_per_flow=n_packets_per_flow,
+                #                        bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows,
+                #                        period=self.period)
+
+                self.fc.compute_period_flows(flow_list)
+
 
     def __del_drop_flow(self):
         drop_flow = json.dumps({
