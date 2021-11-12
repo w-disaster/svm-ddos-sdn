@@ -3,6 +3,7 @@ import time
 import json
 import joblib
 from app.controllers.FeaturesController import FeaturesController
+from app.controllers.FeaturesControllerTraining import FeaturesControllerTraining
 from app.controllers.SVMController import SVMController
 from app.controllers.State import State
 from app.model.ChartData import ChartData
@@ -10,194 +11,151 @@ from app.model.Flow import Flow
 
 """
     DDOSController class.
-    This class 
 """
+SAMPLING_PERIOD = 3
+MITIGATION_PERIOD = 60
+DPID = "1"
+TARGET_HOST = "137.204.60.10"
 
 
 class DDOSController:
-    def __init__(self, queue, period):
+    def __init__(self, queue):
         self.queue = queue
-        self.period = period
         self.svm_controller = SVMController()
-        self.dpid = "1"
         self.legit_src_ips = []
-        self.state = State.NORMAL
-        self.normal_period = self.period
-        self.anomalous_period = 21
-        self.fc = FeaturesController(self.period)
+        self.state = State.NOT_DETERMINED
+        self.fc = FeaturesController(SAMPLING_PERIOD, TARGET_HOST)
+        self.f = []
+        self.flag = False
 
     def run(self):
-        current_period = self.normal_period
-        self.read_flows()
-        time.sleep(self.period)
         while True:
-            if self.state == State.NORMAL:
-                if current_period == self.normal_period:
-                    print("NORMAL")
+            if self.state == State.NOT_DETERMINED:
+                # Get all flows
+                conn = http.client.HTTPConnection("localhost", 8080)
+                conn.request("GET", "/stats/flow/1")
+                response = conn.getresponse()
 
-                    # Get all flows
-                    conn = http.client.HTTPConnection("localhost", 8080)
-                    conn.request("GET", "/stats/flow/1")
-                    response = conn.getresponse()
+                # Read response
+                if response.status == 200:
+                    sample_as_json = json.loads(response.read())
+                    #print(json.dumps(sample_as_json, indent=4, sort_keys=True))
+                else:
+                    sample_as_json = []
 
-                    # Read response
-                    if response.status == 200:
-                        flows_as_json = json.loads(response.read())
-                        # print(json.dumps(flows_as_json, indent=4, sort_keys=True))
-                    else:
-                        flows_as_json = []
-
-                    if len(flows_as_json) > 0:
-                        # Clear variables
-                        src_ips = []
-                        dst_ips = []
-                        n_packets_per_flow = []
-                        bytes_per_flow = []
-                        n_ip_flows = 0
-
-                        flow_list = []
-
-                        # Get flows info
-                        for k in range(0, len(flows_as_json[self.dpid]) - 1):
-                            if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
-                                """src_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                                dst_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                                n_packets_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                                bytes_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                                n_ip_flows = n_ip_flows + 1
-                                """
-                                src_ip = flows_as_json[self.dpid][k]["match"]["nw_src"]
-                                dst_ip = flows_as_json[self.dpid][k]["match"]["nw_dst"]
-                                n_packets = flows_as_json[self.dpid][k]["packet_count"]
-                                n_bytes = flows_as_json[self.dpid][k]["byte_count"]
-
-                                # Append a new flow
-                                flow_list.append(Flow(src_ip, dst_ip, n_packets, n_bytes))
-
-                        # If there are flows based on src ip
-                        if len(flow_list) > 0:
-                            # Features controller
-                            # fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips,
-                            #                        n_packets_per_flow=n_packets_per_flow,
-                            #                        bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows,
-                            #                        period=self.period)
-
-                            self.fc.compute_period_flows(flow_list)
-
-
-                            # Features object
-                            f = self.fc.get_features()
+                if len(sample_as_json) > 0:
+                    # Read flow entries
+                    sample = self.__read_sample(sample_as_json)
+                    # If there are flows based on src ip
+                    if len(sample) > 0:
+                        # Add sample
+                        """self.fc.add_sample(sample, self.flag)
+                        if self.fc.is_first_sample_set():
+                            # Get Features object
+                            self.f = self.fc.get_features()
                             # Get features
-                            features = [f.get_ssip(), f.get_sdfp(), f.get_sdfb(), f.get_sfe(), f.get_rfip()]
+                            features = [self.f.get_ssip(), self.f.get_sdfp(), self.f.get_sdfb(), self.f.get_sfe(),
+                                        self.f.get_rfip()]
                             print(features)
                             # Predict class
-                            next_state = State(self.svm_controller.predict([features]))
+                            self.state = State(self.svm_controller.predict([features]))
+                        else:
+                            time.sleep(SAMPLING_PERIOD)
 
-                            # Update View
-                            self.queue.put(ChartData(time.time(), f, next_state))
+                        if self.flag:
+                            self.flag = False
+                        """
 
-                            if next_state == State.ANOMALOUS:
-                                self.__mitigate(flows_as_json=flows_as_json)
-                            else:
-                                self.__add_legit_src_ips(flows_as_json=flows_as_json)
+                        # Features controller to calculate features from collected flows
+                        fc = FeaturesControllerTraining(sample, TARGET_HOST, SAMPLING_PERIOD)
 
-                            self.state = next_state
-                            current_period = 0
+                        # Get features
+                        f = fc.get_features().get_features_as_array()
+                        print(f)
+
+                        features = []
+                        for (k, v) in f:
+                            features.append(v)
+                        print(features)
+                        # Predict class
+                        self.state = State(self.svm_controller.predict([features]))
+
+                        # First clear all flow entries
+                        conn = http.client.HTTPConnection("localhost", 8080)
+                        conn.request("DELETE", "/stats/flowentry/clear/1")
+                        # Then add Packet-In flow
+                        packet_in_flow = json.dumps({
+                            "dpid": DPID,
+                            "table_id": 0,
+                            "match": {},
+                            "priority": 0,
+                            "actions": [{
+                                "type": "OUTPUT",
+                                "port": "CONTROLLER"
+                            }]
+                        })
+                        conn = http.client.HTTPConnection("localhost", 8080)
+                        conn.request("POST", "/stats/flowentry/add", packet_in_flow)
+
+                        time.sleep(SAMPLING_PERIOD)
+
+
+            elif self.state == State.NORMAL:
+                print("NORMAL")
+                # Update View
+                self.queue.put(ChartData(time.time(), features, self.state))
+                # Add src ips as legitimate
+                self.__add_legit_src_ips(sample_as_json)
+                time.sleep(SAMPLING_PERIOD)
+                self.state = State.NOT_DETERMINED
 
             elif self.state == State.ANOMALOUS:
                 print("ANOMALOUS")
-                if current_period == self.anomalous_period:
-                    self.__del_drop_flow()
-                    self.state = State.NORMAL
-                    current_period = 0
+                # Update View
+                self.queue.put(ChartData(time.time(), self.f, self.state))
+                # Mitigate attack
+                self.__mitigate(sample_as_json)
+                time.sleep(MITIGATION_PERIOD)
+                self.__del_drop_flow()
+                self.fc.clear_fields()
+                time.sleep(SAMPLING_PERIOD)
+                self.flag = True
+                #self.fc = FeaturesController(SAMPLING_PERIOD, TARGET_HOST)
+                self.state = State.NOT_DETERMINED
 
-            time.sleep(self.period)
-            current_period += self.period
-
-
-    def read_flows(self):
-        # Get all flows
-        conn = http.client.HTTPConnection("localhost", 8080)
-        conn.request("GET", "/stats/flow/1")
-        response = conn.getresponse()
-
-        # Read response
-        if response.status == 200:
-            flows_as_json = json.loads(response.read())
-            # print(json.dumps(flows_as_json, indent=4, sort_keys=True))
-        else:
-            flows_as_json = []
-
-        if len(flows_as_json) > 0:
-            # Clear variables
-            src_ips = []
-            dst_ips = []
-            n_packets_per_flow = []
-            bytes_per_flow = []
-            n_ip_flows = 0
-
-            flow_list = []
-
-            # Get flows info
-            for k in range(0, len(flows_as_json[self.dpid]) - 1):
-                if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
-                    """src_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                    dst_ips.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                    n_packets_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                    bytes_per_flow.append(flows_as_json[self.dpid][k]["match"]["nw_src"])
-                    n_ip_flows = n_ip_flows + 1
-                    """
-                    src_ip = flows_as_json[self.dpid][k]["match"]["nw_src"]
-                    dst_ip = flows_as_json[self.dpid][k]["match"]["nw_dst"]
-                    n_packets = flows_as_json[self.dpid][k]["packet_count"]
-                    n_bytes = flows_as_json[self.dpid][k]["byte_count"]
-
-                    # Append a new flow
-                    flow_list.append(Flow(src_ip, dst_ip, n_packets, n_bytes))
-
-            # If there are flows based on src ip
-            if len(flow_list) > 0:
-                # Features controller
-                # fc = FeaturesController(src_ips=src_ips, dst_ips=dst_ips,
-                #                        n_packets_per_flow=n_packets_per_flow,
-                #                        bytes_per_flow=bytes_per_flow, n_flows=n_ip_flows,
-                #                        period=self.period)
-
-                self.fc.compute_period_flows(flow_list)
-
-
-    def __del_drop_flow(self):
-        drop_flow = json.dumps({
-            "dpid": 1,
-            "priority": 10,
-            "match": {
-                "ipv4_dst": "137.204.0.20",
-                "dl_type": 2048,
-            },
-            # DROP
-            "actions": []
-        })
-        conn = http.client.HTTPConnection("localhost", 8080)
-        conn.request("POST", "/stats/flowentry/delete_strict", drop_flow)
-
-    def __add_legit_src_ips(self, flows_as_json):
-        for k in range(0, len(flows_as_json[self.dpid]) - 1):
-            if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
-                src_ip = flows_as_json[self.dpid][k]["match"]["nw_src"]
-                if src_ip not in self.legit_src_ips:
+    def __read_sample(self, sample_as_json):
+        # Sample array
+        sample = []
+        # Read flows from sample
+        for k in range(0, len(sample_as_json[DPID]) - 1):
+            if not (sample_as_json[DPID][k]["match"].get('nw_src') is None):
+                src_ip = sample_as_json[DPID][k]["match"]["nw_src"]
+                dst_ip = sample_as_json[DPID][k]["match"]["nw_dst"]
+                n_packets = sample_as_json[DPID][k]["packet_count"]
+                n_bytes = sample_as_json[DPID][k]["byte_count"]
+                # Append a new flow
+                sample.append(Flow(src_ip, dst_ip, n_packets, n_bytes))
+        return sample
+    
+    def __add_legit_src_ips(self, sample_as_json):
+        for k in range(0, len(sample_as_json[DPID]) - 1):
+            if not (sample_as_json[DPID][k]["match"].get('nw_src') is None):
+                src_ip = sample_as_json[DPID][k]["match"]["nw_src"]
+                packet_count = sample_as_json[DPID][k]["packet_count"]
+                if src_ip not in self.legit_src_ips and packet_count > 0:
                     self.legit_src_ips.append(src_ip)
 
-    def __mitigate(self, flows_as_json):
+    def __mitigate(self, sample_as_json):
         # First delete all junk flow entries
         conn = http.client.HTTPConnection("localhost", 8080)
         conn.request("DELETE", "/stats/flowentry/clear/1")
 
         # Then add a flow entry that drops all traffic with victim's destination IP
         drop_flow = json.dumps({
-            "dpid": 1,
+            "dpid": DPID,
             "priority": 10,
             "match": {
-                "ipv4_dst": "137.204.0.20",
+                "ipv4_dst": TARGET_HOST,
                 "dl_type": 2048,
             },
             # DROP
@@ -207,7 +165,7 @@ class DDOSController:
         conn.request("POST", "/stats/flowentry/add", drop_flow)
 
         packet_in_flow = json.dumps({
-            "dpid": "1",
+            "dpid": DPID,
             "table_id": 0,
             "match": {},
             "priority": 0,
@@ -220,19 +178,19 @@ class DDOSController:
         conn.request("POST", "/stats/flowentry/add", packet_in_flow)
 
         # In conclusion keep connection for legitimate users
-        for k in range(0, len(flows_as_json[self.dpid]) - 1):
-            if not (flows_as_json[self.dpid][k]["match"].get('nw_src') is None):
-                if flows_as_json[self.dpid][k]["match"]["nw_src"] in self.legit_src_ips and \
-                        flows_as_json[self.dpid][k]["packet_count"] > 0:
-                    action = flows_as_json[self.dpid][k]["actions"][0].split(":")
-                    #print(flows_as_json[self.dpid][k]["match"]["nw_src"])
+        for k in range(0, len(sample_as_json[DPID]) - 1):
+            if not (sample_as_json[DPID][k]["match"].get('nw_src') is None):
+                if sample_as_json[DPID][k]["match"]["nw_src"] in self.legit_src_ips and \
+                        sample_as_json[DPID][k]["packet_count"] > 0:
+                    action = sample_as_json[DPID][k]["actions"][0].split(":")
+                    #print(sample_as_json[DPID][k]["match"]["nw_src"])
                     add_flow = json.dumps({
-                        "dpid": self.dpid,
+                        "dpid": DPID,
                         "priority": 20,
                         "match": {
-                            "ipv4_src": flows_as_json[self.dpid][k]["match"]["nw_src"],
-                            "ipv4_dst": flows_as_json[self.dpid][k]["match"]["nw_dst"],
-                            "dl_type": flows_as_json[self.dpid][k]["match"]["dl_type"],
+                            "ipv4_src": sample_as_json[DPID][k]["match"]["nw_src"],
+                            "ipv4_dst": sample_as_json[DPID][k]["match"]["nw_dst"],
+                            "dl_type": sample_as_json[DPID][k]["match"]["dl_type"],
                         },
                         "actions": [
                             {
@@ -243,3 +201,18 @@ class DDOSController:
                     })
                     conn = http.client.HTTPConnection("localhost", 8080)
                     conn.request("POST", "/stats/flowentry/add", add_flow)
+
+                    
+    def __del_drop_flow(self):
+        drop_flow = json.dumps({
+            "dpid": DPID,
+            "priority": 10,
+            "match": {
+                "ipv4_dst": TARGET_HOST,
+                "dl_type": 2048,
+            },
+            # DROP
+            "actions": []
+        })
+        conn = http.client.HTTPConnection("localhost", 8080)
+        conn.request("POST", "/stats/flowentry/delete_strict", drop_flow)
