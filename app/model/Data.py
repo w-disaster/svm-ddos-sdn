@@ -1,4 +1,4 @@
-class ChartData:
+class Data:
     def __init__(self, timestamp, features, traffic):
         self.timestamp = timestamp
         self.features = features
@@ -10,5 +10,5 @@ class ChartData:
     def get_features(self):
         return self.features
 
-    def get_traffic(self):
+    def get_traffic_state(self):
         return self.traffic

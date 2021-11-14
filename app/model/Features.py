@@ -1,8 +1,8 @@
 from enum import Enum
 
 
-class FeatureLabel(Enum):
-    SSIP = "Speed of source IPs"
+class Feature(Enum):
+    SSIP = "Speed of source IP"
     SDFP = "Standard deviation of flow packets"
     SDFB = "Standard deviation of flow bytes"
     SFE = "Speed of flow entries"
@@ -18,8 +18,8 @@ class Features:
         self.rfip = rfip
 
     def get_features_as_array(self):
-        return [(FeatureLabel.SSIP, self.ssip), (FeatureLabel.SDFP, self.sdfp),
-                (FeatureLabel.SDFB, self.sdfb), (FeatureLabel.SFE, self.sfe), (FeatureLabel.RFIP, self.rfip)]
+        return [(Feature.SSIP, self.ssip), (Feature.SDFP, self.sdfp),
+                (Feature.SDFB, self.sdfb), (Feature.SFE, self.sfe), (Feature.RFIP, self.rfip)]
 
     def get_ssip(self):
         return self.ssip

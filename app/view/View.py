@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from queue import Queue
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from app.controllers.DDOSController import DDOSController
+from app.controllers.DDoSController import DDoSController
 from app.model.State import State
 from app.model.Features import Feature
 
@@ -30,7 +30,7 @@ class View:
     Start controller thread
     """
     def start_controller(self):
-        controller = DDOSController(queue=self.queue)
+        controller = DDoSController(queue=self.queue)
         c_thread = threading.Thread(target=controller.run, daemon=True)
         c_thread.start()
 
@@ -84,7 +84,7 @@ class View:
             data = self.queue.get()
 
             # Update label text and colour
-            state = data.get_traffic()
+            state = data.get_traffic_state()
             label.config(text=state.name, bg="green" if state == State.NORMAL else "red")
 
             # Get the timestamp and append it into the array
