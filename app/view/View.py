@@ -1,76 +1,114 @@
 import threading
+import tkinter
 from tkinter import Tk, Label
-
 from matplotlib import pyplot as plt
 from queue import Queue
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-
 from app.controllers.DDOSController import DDOSController
-from app.model.Features import FeatureLabel, Features
+from app.model.State import State
+from app.model.Features import Feature
 
 """
-    FeaturesView class.
-    This class plots the charts with the real time features computed by
-    the controller. It's implemented by a blocking queue: when there are
-    features in it they are plotted.
+    View class.
+    This class starts the controller thread and plots its calculated features
+    in different charts. It's implemented by a blocking queue: whenever 
+    new features are computed, they're popped from the queue and plotted.
 """
 
 
-class FeaturesView:
+class View:
     def __init__(self):
-        # Fields
+        # Blocking queue
         self.queue = Queue()
-        self.period = 0.5
-        self.t_arr = []
-        self.f_arr = [[], [], [], [], []]
 
-        # Start controller thread
-        mc = DDOSController(queue=self.queue, period=self.period)
-        c_thread = threading.Thread(target=mc.run, daemon=True)
+        # Init arrays
+        self.timestamps = []
+        self.features = [[], [], [], [], []]
+
+    """
+    Start controller thread
+    """
+    def start_controller(self):
+        controller = DDOSController(queue=self.queue)
+        c_thread = threading.Thread(target=controller.run, daemon=True)
         c_thread.start()
 
+    """
+    Start view by creating a Tkinter window and running the receiving thread
+    """
+    def start(self):
+        # Tkinter
         root = Tk()
+        root.title('DDoS protect')
         root.config(background='white')
-        root.geometry("1300x1000")
+        root.geometry("1700x1000")
+
+        # Add traffic state label on top
+        label = Label(root, text="", bg="grey", fg="white", font=("monospace", 16), width=20, height=3)
+        label.pack(pady=(30, 0))
+
+        # Add figure with plots
         fig = Figure()
+        ax = []
+        k = 0
 
-        labels = [fb.name for fb in list(FeatureLabel)]
-        self.ax = []
-        for i, l in enumerate(labels):
-            self.ax.append(fig.add_subplot(2, 3, i + 1))
-            self.ax[i].title.set_text(l)
-            self.ax[i].grid()
+        # Subplots
+        for i, v in enumerate(list(Feature)):
+            if i < 3:
+                # Place first three plots on the first line
+                ax.append(plt.subplot2grid(shape=(2, 6), loc=(0, i * 2), colspan=2, fig=fig))
+            else:
+                # Place the last two in the 2nd line
+                ax.append(plt.subplot2grid(shape=(2, 6), loc=(1, k * 2 + 1), colspan=2, fig=fig))
+                k += 1
+            ax[i].title.set_text(v.value)
+            ax[i].grid()
 
-        self.graph = FigureCanvasTkAgg(fig, master=root)
-        self.graph.get_tk_widget().pack(side="top", fill='both', expand=True)
+        # Pack the figure
+        graph = FigureCanvasTkAgg(fig, master=root)
+        graph.get_tk_widget().pack(fill=tkinter.BOTH, expand=True)
 
-        threading.Thread(target=self.plot_data).start()
-
+        # Start the thread to update the charts while maintaining Tkinter up
+        threading.Thread(target=self.__run, args=(label, ax, graph)).start()
         root.mainloop()
 
-    def plot_data(self):
+    """ 
+    This method plots the features taken from the blocking queue whenever the 
+    controller computes one. Furthermore, the label text and colour are updated
+    according to the traffic state 
+    """
+    def __run(self, label, ax, graph):
         while True:
-            chart_data = self.queue.get()
-            timestamp = chart_data.get_timestamp()
-            self.t_arr.append(timestamp)
-            self.t_arr = self.t_arr[-50:]
+            # Blocking queue: wait until new data is ready
+            data = self.queue.get()
 
-            for i, (label, value) in enumerate(chart_data.get_features().get_features_as_array()):
-                self.ax[i].cla()
-                self.ax[i].grid()
+            # Update label text and colour
+            state = data.get_traffic()
+            label.config(text=state.name, bg="green" if state == State.NORMAL else "red")
 
-                self.f_arr[i].append(value)
-                self.f_arr[i] = self.f_arr[i][-50:]
+            # Get the timestamp and append it into the array
+            timestamp = data.get_timestamp()
+            self.timestamps.append(timestamp)
+            self.timestamps = self.timestamps[-50:]
 
-                self.ax[i].title.set_text(label.value)
-                self.ax[i].plot(self.t_arr, self.f_arr[i], marker='o', color='orange')
-                self.graph.draw()
+            # Get the features and plot them into the corresponding chart
+            for i, (label, value) in enumerate(data.get_features().get_features_as_array()):
+                ax[i].cla()
+                ax[i].grid()
+                # Append features data
+                self.features[i].append(value)
+                self.features[i] = self.features[i][-50:]
+                ax[i].title.set_text(label.value)
+
+                # Plot data
+                ax[i].plot(self.timestamps, self.features[i], marker='o', color='orange')
+                graph.draw()
 
 
 if __name__ == "__main__":
-    # Run View with charts
-    fw = FeaturesView()
-    #fw.run()
-
+    view = View()
+    # Start controller thread
+    view.start_controller()
+    # Start view
+    view.start()
