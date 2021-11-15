@@ -20,7 +20,6 @@ class C1(app_manager.RyuApp):
         super(C1, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
     
-    # From simple_switch_13
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         datapath = ev.msg.datapath
@@ -39,10 +38,6 @@ class C1(app_manager.RyuApp):
                                           ofproto.OFPCML_NO_BUFFER)]
         self.add_flow(datapath, 0, match, actions)
 
-    # add a new flow(rule) to switch.
-    #   priority : the packet will match the highest priority to match, then follw the action to deal with packet.
-    #   match    : set the match condition, ex: 1 = msg.match['in_port']
-    #                                           packet from port 1 will be match.
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
@@ -56,25 +51,8 @@ class C1(app_manager.RyuApp):
         else:
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
-        datapath.send_msg(mod)
-
+        datapath.send_msg(mod)    
     
-    # send the packet back to the switch and we can set actions on it.
-    def send_packet_out(self, msg, actions):
-        datapath = msg.datapath
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-        in_port = msg.match['in_port']
-
-        data = None
-        # if the packet is not in queue of queue from switch to the controller
-        if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-            data = msg.data
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-                                    in_port=in_port, actions=actions, data=data)
-        datapath.send_msg(out)
-
-    # Event: Handle packet sent from switch to the controller
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
         # If you hit this you might want to increase
@@ -123,69 +101,30 @@ class C1(app_manager.RyuApp):
                 dstip = ip.dst
                 protocol = ip.proto
                 
-                # Default Match of Ryu: simple_switch_13 module
-                # match = parser.OFPMatch(in_port=in_port, eth_dst=dl_dst, eth_src=dl_src)
+                match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
+                                        ipv4_src=srcip,
+                                        ipv4_dst=dstip,
+                                        eth_src=dl_src,
+                                        eth_dst=dl_dst,
+                                        in_port=in_port,
+                                        ip_proto=protocol)
+
+           else:
+                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
                 
-                # If ICMP Protocol
-                if protocol == in_proto.IPPROTO_ICMP:
-                    icmp_info = pkt.get_protocol(icmp.icmp)
-                    print(icmp_info.type)
-                    match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                            ipv4_src=srcip,
-                                            ipv4_dst=dstip,
-                                            eth_src=dl_src,
-                                            eth_dst=dl_dst,
-                                            in_port=in_port,
-                                            ip_proto=protocol,
-                                            )
-    
-                #  If UDP Protocol 
-                elif protocol == in_proto.IPPROTO_UDP:
-                    u = pkt.get_protocol(udp.udp)
-                    match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                            ipv4_src=srcip,
-                                            ipv4_dst=dstip,
-                                            eth_dst=dl_dst,
-                                            eth_src=dl_src,
-                                            ip_proto=protocol,
-                                            in_port=in_port,
-                                            udp_src=u.src_port,
-                                            udp_dst=u.dst_port,
-                                            )          
-
-                # if TCP Protocol
-                elif protocol == in_proto.IPPROTO_TCP:
-                    t = pkt.get_protocol(tcp.tcp)
-                    tcp_src = t.src_port
-                    tcp_dst = t.dst_port
-                    # Custom match
-                    match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                            ipv4_src=srcip,
-                                            ipv4_dst=dstip,
-                                            eth_dst=dl_dst,
-                                            eth_src=dl_src,
-                                            ip_proto=protocol,
-                                            in_port=in_port,
-                                            tcp_src=tcp_src,
-                                            tcp_dst=tcp_dst,
-                                            )
-
-                #actions.append(parser.OFPActionExperimenter(1))
-                #parser.OFPExperimenter(datapath, 1, data=srcip)
-
-
-                # verify if we have a valid buffer_id, if yes avoid to send both
-                # flow_mod & packet_out
-                if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-                    self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                    return
-                else:
-                    self.add_flow(datapath, 1, match, actions)
+            # verify if we have a valid buffer_id, if yes avoid to send both
+            # add flow
+            if msg.buffer_id != ofproto.OFP_NO_BUFFER:
+                self.add_flow(datapath, 1, match, actions, msg.buffer_id)
+                return
+            else:
+                self.add_flow(datapath, 1, match, actions)
                     
         data = None
         if msg.buffer_id == ofproto.OFP_NO_BUFFER:
             data = msg.data
 
+        # packet out
         out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
                                   in_port=in_port, actions=actions, data=data)
         datapath.send_msg(out)
