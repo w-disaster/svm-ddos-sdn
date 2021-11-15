@@ -29,7 +29,7 @@ class FeaturesControllerTraining:
     def __get_sdfb(self):
         n_bytes = []
         for flow in self.flow_list:
-            n_bytes.append(flow.get_n_packets())
+            n_bytes.append(flow.get_n_bytes())
         return np.std(n_bytes)
 
     def __get_sfe(self):

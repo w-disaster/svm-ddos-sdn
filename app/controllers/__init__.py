@@ -1,1 +1,1 @@
-from app.controllers.MainController import MainController
+from app.controllers.DDOSControllerOld import DDOSController

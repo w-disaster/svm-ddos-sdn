@@ -3,7 +3,7 @@ import joblib
 
 class SVMController:
     def __init__(self):
-        self.filename = '../controllers/model.sav'
+        self.filename = '../training/model.sav'
         self.clf = joblib.load(self.filename)
         
     def predict(self, features):
