@@ -15,7 +15,7 @@ from app.model.TrafficState import TrafficState
 """
 
 SAMPLING_PERIOD = 3
-MITIGATION_PERIOD = 10
+MITIGATION_PERIOD = 30
 DPID = "1"
 HIGH_PRIORITY = 20
 MEDIUM_PRIORITY = 10
