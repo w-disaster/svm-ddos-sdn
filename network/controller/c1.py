@@ -94,32 +94,31 @@ class C1(app_manager.RyuApp):
         # install a flow to avoid packet_in next time
         if out_port != ofproto.OFPP_FLOOD:
             
-            # check IP Protocol and create a match for IP
+            # check IP protocol
             if eth.ethertype == ether_types.ETH_TYPE_IP:
                 ip = pkt.get_protocol(ipv4.ipv4)
-                srcip = ip.src
-                dstip = ip.dst
+                src_ip = ip.src
+                dst_ip = ip.dst
                 protocol = ip.proto
                 
+                # match all packets with src_ip as source IP, dst_ip as
+                # destination IP
                 match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                        ipv4_src=srcip,
-                                        ipv4_dst=dstip,
-                                        eth_src=dl_src,
-                                        eth_dst=dl_dst,
-                                        in_port=in_port,
-                                        ip_proto=protocol)
-
-           else:
-                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
-                
-            # verify if we have a valid buffer_id, if yes avoid to send both
-            # add flow
-            if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-                self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                return
-            else:
-                self.add_flow(datapath, 1, match, actions)
-                    
+                        ipv4_src=src_ip,
+                        ipv4_dst=dst_ip,
+                        eth_src=dl_src,
+                        eth_dst=dl_dst,
+                        in_port=in_port,
+                        ip_proto=protocol)
+               
+                # verify if we have a valid buffer_id, if yes avoid to send both
+                # add flow
+                if msg.buffer_id != ofproto.OFP_NO_BUFFER:
+                    self.add_flow(datapath, 1, match, actions, msg.buffer_id)
+                    return
+                else:
+                    self.add_flow(datapath, 1, match, actions)
+                        
         data = None
         if msg.buffer_id == ofproto.OFP_NO_BUFFER:
             data = msg.data

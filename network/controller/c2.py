@@ -26,6 +26,7 @@ class C2(app_manager.RyuApp):
         port_status_mask = (1 << ofproto.OFPPR_ADD
                         & 1 << ofproto.OFPPR_DELETE
                         & 1 << ofproto.OFPPR_MODIFY)
+        
         # Do not receive flow removed messages
         flow_removed_mask = (1 << ofproto.OFPRR_IDLE_TIMEOUT
                          & 1 << ofproto.OFPRR_HARD_TIMEOUT
