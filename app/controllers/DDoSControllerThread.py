@@ -49,7 +49,6 @@ class DDoSControllerThread:
                 self.prec_state = self.state
 
                 # After waiting SAMPLING_PERIOD sec get flow entries
-                print("wait")
                 time.sleep(SAMPLING_PERIOD)
                 conn = http.client.HTTPConnection(API_IP, API_PORT)
                 conn.request("GET", "/stats/flow/" + DPID)

@@ -2,21 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fcad78ad-93b2-4a36-8eea-688ee14442e1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/training/svm_1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/controllers/MainController.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/MainController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/controllers/model.sav" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/model.sav" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/controllers/tmp" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/tmp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/view/FeaturesView.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/view/FeaturesView.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/view/live.csv" beforeDir="false" afterPath="$PROJECT_DIR$/app/view/live.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/controller/switch.py" beforeDir="false" afterPath="$PROJECT_DIR$/network/controller/switch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/.ipynb_checkpoints/Untitled-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/app/training/.ipynb_checkpoints/Untitled-checkpoint.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/Untitled.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/app/training/Untitled.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/dataset.csv" beforeDir="false" afterPath="$PROJECT_DIR$/app/training/dataset.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/model.sav" beforeDir="false" afterPath="$PROJECT_DIR$/app/training/model.sav" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/ok.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/svm.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/training/svm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network/training/svm_1.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/controllers/DDoSControllerThread.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/DDoSControllerThread.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,9 +37,16 @@
       <recent name="$PROJECT_DIR$/app/controllers" />
       <recent name="$PROJECT_DIR$" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/controllers" />
+      <recent name="$PROJECT_DIR$/app/training/utils" />
+      <recent name="$PROJECT_DIR$/app/training/classifier" />
+      <recent name="$PROJECT_DIR$/app/model" />
+      <recent name="$PROJECT_DIR$/app" />
+    </key>
   </component>
-  <component name="RunManager" selected="Python.FeaturesView">
-    <configuration name="FeaturesView" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.View">
+    <configuration name="View" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="svm_ddos_sdn" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -64,7 +58,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/view/FeaturesView.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/view/View.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -94,7 +88,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="svm" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="plot_svm" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="svm_ddos_sdn" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -102,11 +96,32 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/network/training" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/training" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/network/training/svm.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/training/plot_svm.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="shuffle" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="svm_ddos_sdn" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/training" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/training/shuffle.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -127,7 +142,28 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/training/svm.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/training/classifier/svm.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="train" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="svm_ddos_sdn" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/training" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/training/train.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -138,15 +174,19 @@
     </configuration>
     <list>
       <item itemvalue="Python.main" />
-      <item itemvalue="Python.FeaturesView" />
       <item itemvalue="Python.svm" />
-      <item itemvalue="Python.svm_1" />
+      <item itemvalue="Python.View" />
+      <item itemvalue="Python.train" />
+      <item itemvalue="Python.shuffle" />
+      <item itemvalue="Python.plot_svm" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.FeaturesView" />
-        <item itemvalue="Python.svm_1" />
+        <item itemvalue="Python.View" />
+        <item itemvalue="Python.plot_svm" />
+        <item itemvalue="Python.train" />
         <item itemvalue="Python.svm" />
+        <item itemvalue="Python.shuffle" />
       </list>
     </recent_temporary>
   </component>
@@ -172,16 +212,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
