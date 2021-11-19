@@ -34,8 +34,8 @@ def DDOSNetwork():
     # Connecting switches to external controller
     #net.start()
     #sw1.cmd('ovs-vsctl set-controller ' + sw1.name + ' tcp:192.168.1.17:6653')
-    c1 = net.addController("c0", controller=RemoteController, ip="127.0.0.1", port=6653)
-    c2 = net.addController("c1", controller=RemoteController, ip="127.0.0.1", port=6633)
+    c1 = net.addController("c0", controller=RemoteController, ip="192.168.1.17", port=6653)
+    c2 = net.addController("c1", controller=RemoteController, ip="192.168.1.17", port=6633)
     
     c1.start()
     c2.start()
@@ -44,7 +44,7 @@ def DDOSNetwork():
 
     for h in net.hosts:
         if h.name != "host2":
-            h.cmd("ping 137.204.0.20 &")
+            h.cmd("bash /home/luca/Desktop/traffic.sh &")
 
     CLI(net)
     net.stop()

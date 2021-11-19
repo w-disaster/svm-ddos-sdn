@@ -24,16 +24,16 @@ def myNetwork():
     # Adding hosts
     
     for i in range(1, 6):
-        #h = net.addHost('host' + str(i), custom( CPULimitedHost, cpu=0.1), 
-        #        ip='137.204.0.' + str(i * 10) + '/24')
-        h = net.addHost('host' + str(i), 
+        h = net.addHost('host' + str(i), custom( CPULimitedHost, cpu=0.1), 
                 ip='137.204.0.' + str(i * 10) + '/24')
-        net.addLink(h, sw1, bw=1, delay='50ms')
+        #h = net.addHost('host' + str(i), cpu=.2, 
+        #        ip='137.204.0.' + str(i * 10) + '/24')
+        net.addLink(h, sw1, bw=10)
         h.setMAC("00:00:00:00:00:0" + str(i), h.name + "-eth0")    
 
     # Connecting switches to external controller
     net.start()
-    sw1.cmd('ovs-vsctl set-controller ' + sw1.name + ' tcp:127.0.0.1:6653')
+    sw1.cmd('ovs-vsctl set-controller ' + sw1.name + ' tcp:192.168.1.17:6653')
     
     for h in net.hosts:
         if h.name != "host2":

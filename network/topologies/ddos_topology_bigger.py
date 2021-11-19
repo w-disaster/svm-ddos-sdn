@@ -26,6 +26,8 @@ def DDOSNetwork(c0_ip, c0_port, c1_ip, c1_port, traffic_filename):
     c1 = net.addController("c1", controller=RemoteController, 
             ip=c1_ip, port=c1_port)
 
+    c0.start()
+    c1.start()
     # Adding hosts
     s0 = net.addSwitch("s0")
     s0.start([c0, c1])
@@ -45,15 +47,15 @@ def DDOSNetwork(c0_ip, c0_port, c1_ip, c1_port, traffic_filename):
     net.addLink(h_target, s0, bw=10)
 
     # Start controllers
-    c0.start()
-    c1.start()
+    #c0.start()
+    #c1.start()
     # Start network
     net.start()
 
     # Start to ping
-    #for h in net.hosts:
-        #if h.name != "h_target":
-            #h.cmd("bash " + traffic_filename + " " + h_target.IP() + " &")
+    for h in net.hosts:
+        if h.name != "h_target":
+            h.cmd("bash " + traffic_filename + " " + h_target.IP() + " &")
             #CLI.do_xterm(h.name)
 
     CLI(net)
