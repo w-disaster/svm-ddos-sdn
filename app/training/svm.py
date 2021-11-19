@@ -7,7 +7,7 @@ from sklearn.svm import SVC
 from sklearn import metrics
 
 # Read csv file
-df = pd.read_csv('final_dataset.csv')
+df = pd.read_csv('shuffled_final_dataset.csv')
 
 # Read columns and build matrix
 X = np.c_[df["speed_src_ip"], df["std_n_packets"],

@@ -1,18 +1,18 @@
 #!/usr/bin/python3
+from app.controllers.FeaturesCalculator import FeaturesCalculator
+from app.model.Flow import Flow
 import csv
 import http
 import json
 import time
-
-from app.controllers.FeaturesControllerTraining import FeaturesControllerTraining
-from app.model.Flow import Flow
+import http.client
 
 # Variables
 MAX_SAMPLES = 1000
 SAMPLING_PERIOD = 3
 DPID = "1"
 TARGET_IP = "137.204.10.100"
-f = open('normal_dataset_final.csv', 'w')
+f = open('dataset.csv', 'w')
 writer = csv.writer(f)
 
 
@@ -20,7 +20,7 @@ writer = csv.writer(f)
 def del_flows_add_packet_in():
     # Clear all flow entries
     conn = http.client.HTTPConnection("localhost", 8080)
-    conn.request("DELETE", "/stats/flowentry/clear/1")
+    conn.request("DELETE", "/stats/flowentry/clear/" + DPID)
    
     # Add packet in
     packet_in_flow = json.dumps({
@@ -53,14 +53,14 @@ def read_sample(sample_as_json):
 
 
 def build_dataset():
-    del_flows_add_packet_in()
-    time.sleep(SAMPLING_PERIOD)
-    
     # Collect MAX_SAMPLES samples
     for i in range(1, MAX_SAMPLES):
+        del_flows_add_packet_in()
+        time.sleep(SAMPLING_PERIOD)
+
         # Get all flows
         conn = http.client.HTTPConnection("localhost", 8080)
-        conn.request("GET", "/stats/flow/1")
+        conn.request("GET", "/stats/flow/" + DPID)
         response = conn.getresponse()
 
         # Read response
@@ -75,8 +75,7 @@ def build_dataset():
             # If there are flows based on src ip
             if len(sample) > 0:
                 # Features controller to calculate features from collected flows
-                fc = FeaturesControllerTraining(sample, TARGET_IP, SAMPLING_PERIOD)
-
+                fc = FeaturesCalculator(sample, TARGET_IP, SAMPLING_PERIOD)
                 # Get features
                 row = []
                 features = fc.get_features().get_features_as_array()
@@ -85,14 +84,9 @@ def build_dataset():
                     row.append(v)
 
                 # Append Class
-                row.append(1)
+                row.append(0)
                 # Write into csv
                 writer.writerow(row)
-
-                # Delete flow entries, add Packet In
-                del_flows_add_packet_in()
-
-        time.sleep(SAMPLING_PERIOD)
 
 
 if __name__ == "__main__":
