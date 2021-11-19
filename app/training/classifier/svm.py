@@ -7,7 +7,7 @@ from sklearn.svm import SVC
 from sklearn import metrics
 
 # Read csv file
-df = pd.read_csv('shuffled_final_dataset.csv')
+df = pd.read_csv('dataset.csv')
 
 # Read columns and build matrix
 X = np.c_[df["speed_src_ip"], df["std_n_packets"],
@@ -32,5 +32,5 @@ y_pred = clf.predict(X_test)
 print("Accuracy: ", metrics.accuracy_score(y_test, y_pred))
 
 # Save the model into a file
-f = 'model.sav'
+f = 'classifier/model.sav'
 joblib.dump(clf, f)
