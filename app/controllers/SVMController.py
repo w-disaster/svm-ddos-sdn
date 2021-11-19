@@ -1,4 +1,5 @@
 import joblib
+from app.model.TrafficState import TrafficState
 
 
 class SVMController:
@@ -7,4 +8,4 @@ class SVMController:
         self.clf = joblib.load(self.filename)
         
     def predict(self, features):
-        return self.clf.predict(features)
+        return TrafficState(self.clf.predict(features))

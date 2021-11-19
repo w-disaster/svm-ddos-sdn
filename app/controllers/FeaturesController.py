@@ -5,29 +5,29 @@ from app.model.Features import Features
 
 
 class FeaturesController:
-    def __init__(self, period, target_ip):
+    def __init__(self, period):
+        self.period = period
         self.period_flows = {}
         self.old_period_flows = {}
-        self.period = period
-        self.target_ip = target_ip
-        self.first_sample_set = False
+        self.dst_ip_count = {}
+        self.most_targeted_ip = None
 
-    def add_sample(self, flows, flag):
+    def add_sample(self, flows):
         for i, flow in enumerate(flows):
             # If the flow already exists
             if (flow.get_src_ip(), flow.get_dst_ip()) in self.period_flows:
                 # Calculate the number of packets passed in the period T
-                local_flow_n_packets = flow.get_n_packets() - \
-                                       self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_packets"]
+                local_flow_packet_count = flow.get_packet_count() - \
+                                       self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["packet_count"]
 
                 # If it's not equal to 0 then set the number of packets and bytes passed in the period T
-                if local_flow_n_packets > 0:
-                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["diff_n_packets"] = local_flow_n_packets
-                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["diff_n_bytes"] = flow.get_n_bytes() - \
-                        self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_bytes"]
+                if local_flow_packet_count > 0:
+                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["diff_packet_count"] = local_flow_packet_count
+                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["diff_byte_count"] = flow.get_byte_count() - \
+                        self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["byte_count"]
 
-                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_packets"] = flow.get_n_packets()
-                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_bytes"] = flow.get_n_bytes()
+                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["packet_count"] = flow.get_packet_count()
+                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["byte_count"] = flow.get_byte_count()
 
                 else:
                     # Else delete the flow == do not consider it for the features computation
@@ -40,74 +40,65 @@ class FeaturesController:
                 is_in_old = (flow.get_src_ip(), flow.get_dst_ip()) in self.old_period_flows
 
                 if is_in_old:
-                    diff_packets = flow.get_n_packets() - \
-                           self.old_period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_packets"]
+                    diff_packets = flow.get_packet_count() - \
+                           self.old_period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["packet_count"]
                 else:
                     diff_packets = 0
 
                 if not is_in_old:
-                    if self.is_first_sample_set():
-                        self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())] = \
-                            {"n_packets": flow.get_n_packets(), "diff_n_packets": flow.get_n_packets(),
-                                "n_bytes": flow.get_n_bytes(), "diff_n_bytes": flow.get_n_bytes()}
-                    else:
-                        self.first_sample_set = True
-                        self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())] = \
-                            {"n_packets": flow.get_n_packets(), "diff_n_packets": 0,
-                                "n_bytes": flow.get_n_bytes(), "diff_n_bytes": 0}
+                    self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())] = \
+                        {"packet_count": flow.get_packet_count(), "diff_packet_count": flow.get_packet_count(),
+                            "byte_count": flow.get_byte_count(), "diff_byte_count": flow.get_byte_count()}
 
                 elif diff_packets > 0:
-                    diff_bytes = flow.get_n_bytes() - \
-                           self.old_period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["n_bytes"]
+                    diff_bytes = flow.get_byte_count() - \
+                           self.old_period_flows[(flow.get_src_ip(), flow.get_dst_ip())]["byte_count"]
 
                     self.period_flows[(flow.get_src_ip(), flow.get_dst_ip())] =  \
-                        {"n_packets": flow.get_n_packets(), "diff_n_packets": diff_packets,
-                            "n_bytes": flow.get_n_bytes(), "diff_n_bytes": diff_bytes}
+                        {"packet_count": flow.get_packet_count(), "diff_packet_count": diff_packets,
+                            "byte_count": flow.get_byte_count(), "diff_byte_count": diff_bytes}
 
                     self.old_period_flows.pop((flow.get_src_ip(), flow.get_dst_ip()))
 
-        #print(self.period_flows)
-        #print(len(self.period_flows))
-        # Delete period flow that has expired
-        #for pf in self.period_flows:
-        #    if pf not in [(flow.src_ip, flow.dst_ip) for flow in flows]:
-        #        self.period_flows.pop(pf)
-    def clear_fields(self):
-        self.period_flows = {}
-        self.old_period_flows = {}
-
-    def is_first_sample_set(self):
-        return self.first_sample_set
-
     def get_features(self):
         return Features(self.__ssip(), self.__sdfp(), self.__sdfb(),
-                        self.__sfe(), self.__rfip())
+                        self.__sfe(), self.__rfp())
+
+    def get_most_targeted_ip(self):
+        self.__compute_most_targeted_ip()
+        return self.most_targeted_ip
+
+    def __compute_most_targeted_ip(self):
+        self.dst_ip_count = {}
+        for (src_ip, dst_ip) in self.period_flows:
+            if dst_ip in self.dst_ip_count:
+                self.dst_ip_count[dst_ip] += 1
+            else:
+                self.dst_ip_count[dst_ip] = 1
+
+        v = list(self.dst_ip_count.values())
+        k = list(self.dst_ip_count.keys())
+        self.most_targeted_ip = k[v.index(max(v))]
 
     def __ssip(self):
-        count_src_ips = 0
-        for (src_ip, dst_ip) in self.period_flows:
-            if src_ip != self.target_ip:
-                count_src_ips += 1
-        return count_src_ips / self.period
+        return self.dst_ip_count[self.most_targeted_ip] / self.period
 
     def __sdfp(self):
-        n_packets = []
+        packet_count = []
         for pf in self.period_flows.values():
-            n_packets.append(pf["diff_n_packets"])
-        print(n_packets)
-        return np.std(n_packets) if len(n_packets) > 0 else 0
+            packet_count.append(pf["diff_packet_count"])
+        return np.std(packet_count) if len(packet_count) > 0 else 0
 
     def __sdfb(self):
-        n_bytes = []
+        byte_count = []
         for pf in self.period_flows.values():
-            n_bytes.append(pf["diff_n_bytes"])
-        print(n_bytes)
-        return np.std(n_bytes) if len(n_bytes) > 0 else 0
+            byte_count.append(pf["diff_byte_count"])
+        return np.std(byte_count) if len(byte_count) > 0 else 0
 
     def __sfe(self):
         return len(self.period_flows) / self.period
 
-    def __rfip(self):
+    def __rfp(self):
         if len(self.period_flows) == 0:
             return 1
         n_int_flows = 0

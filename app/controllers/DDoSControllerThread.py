@@ -2,26 +2,27 @@ import http.client
 import time
 import json
 from datetime import datetime
-from app.controllers.FeaturesControllerTraining import FeaturesControllerTraining
+from app.controllers.FeaturesCalculator import FeaturesControllerTraining
 from app.controllers.SVMController import SVMController
 from app.model.State import State
 from app.model.Data import Data
 from app.model.Flow import Flow
+from app.model.TrafficState import TrafficState
 
 """
     DDOSController class
 """
 
 SAMPLING_PERIOD = 3
-MITIGATION_PERIOD = 30
+MITIGATION_PERIOD = 60
 DPID = "1"
-TARGET_HOST = "137.204.10.100"
+TARGET_IP = "137.204.10.100"
 HIGH_PRIORITY = 20
 MEDIUM_PRIORITY = 10
 LOW_PRIORITY = 0
 
 
-class DDoSController:
+class DDoSControllerThread:
     def __init__(self, queue):
         self.queue = queue
         self.svm_controller = SVMController()
@@ -54,7 +55,7 @@ class DDoSController:
                     sample = self.__read_sample(sample_as_json)
                     if len(sample) > 0:
                         # Features controller to calculate features from collected flows
-                        fc = FeaturesControllerTraining(sample, TARGET_HOST, SAMPLING_PERIOD)
+                        fc = FeaturesControllerTraining(sample, TARGET_IP, SAMPLING_PERIOD)
 
                         # Get features
                         self.f = fc.get_features()
@@ -63,13 +64,15 @@ class DDoSController:
                         print(features)
 
                         # Predict traffic state
-                        self.state = self.svm_controller.predict([features])
+                        self.state = State(self.svm_controller.predict([features]).value)
 
             elif self.state == State.NORMAL:
                 print("NORMAL")
 
                 # Update View
-                self.queue.put(Data(datetime.now().strftime("%H:%M:%S"), self.f, self.state))
+                time_string = datetime.now().strftime("%H:%M:%S")
+                self.queue.put(
+                    Data(datetime.strptime(time_string, '%H:%M:%S'), self.f, TrafficState(self.state.value)))
 
                 # Add src ips as legitimate
                 self.__add_legit_src_ips(sample_as_json)
@@ -80,12 +83,14 @@ class DDoSController:
                 print("ANOMALOUS")
 
                 # Update View
-                self.queue.put(Data(datetime.now().strftime("%H:%M:%S"), self.f, self.state))
+                time_string = datetime.now().strftime("%H:%M:%S")
+                self.queue.put(
+                    Data(datetime.strptime(time_string, '%H:%M:%S'), self.f, TrafficState(self.state.value)))
 
                 # Mitigate attack
                 self.__mitigate(sample_as_json)
-                time.sleep(SAMPLING_PERIOD)
-
+                time.sleep(MITIGATION_PERIOD)
+                self.state = State.UNCERTAIN
 
     """
     Delete all flow entries of DPID and add Packet In flow rule
@@ -153,7 +158,7 @@ class DDoSController:
             "dpid": DPID,
             "priority": MEDIUM_PRIORITY,
             "match": {
-                "ipv4_dst": TARGET_HOST,
+                "ipv4_dst": TARGET_IP,
                 "dl_type": 2048,
             },
             # DROP
@@ -180,7 +185,6 @@ class DDoSController:
             if not (sample_as_json[DPID][k]["match"].get('nw_src') is None):
                 if sample_as_json[DPID][k]["match"]["nw_src"] in self.legit_src_ips:
                     action = sample_as_json[DPID][k]["actions"][0].split(":")
-                    #print(sample_as_json[DPID][k]["match"]["nw_src"])
                     add_flow = json.dumps({
                         "dpid": DPID,
                         "priority": HIGH_PRIORITY,

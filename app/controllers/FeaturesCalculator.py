@@ -3,7 +3,7 @@ import numpy as np
 from app.model.Features import Features
 
 
-class FeaturesControllerTraining:
+class FeaturesCalculator:
     def __init__(self, sample, target_ip, sampling_period):
         self.sample = sample
         self.target_ip = target_ip
