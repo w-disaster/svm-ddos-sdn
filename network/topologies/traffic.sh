@@ -12,8 +12,7 @@ else
 	    N_BYTES=$(shuf -i 150-200 -n 1)
 	    PAUSE=$(shuf -i 1-10 -n 1)
 	    ping -c 1 "$TARGET_IP"
-	    sudo hping3 -c $N_PACKETS -d $N_BYTES --icmp "$TARGET_IP"
+	    sudo hping3 -c $N_PACKETS -d $N_BYTES --icmp  "$TARGET_IP"
 	    sleep $PAUSE
-	    echo "ok"
 	done
 fi
