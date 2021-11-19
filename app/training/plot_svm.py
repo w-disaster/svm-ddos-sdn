@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 import numpy as np
 import pandas as pd
-import joblib
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn import metrics
 
 # Read csv file
-df = pd.read_csv('shuffled_final_dataset.csv')
+df = pd.read_csv('classifier/dataset.csv')
 
 # Read columns and build matrix
 X = np.c_[df["speed_src_ip"], df["std_n_packets"],
@@ -50,18 +49,3 @@ plt.xlabel('SDFP')
 plt.ylabel('SDFB')
 plt.legend(loc="upper right")
 plt.show()
-# Put the result into a color plot
-"""
-plt.contourf(y_pred, y_pred[], Z, cmap=plt.cm.coolwarm, alpha=0.8)
-
-# Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.0coolwarm)
-
-plt.xlim(xx.min(), xx.max())
-plt.ylim(yy.min(), yy.max())
-plt.xticks(())
-plt.yticks(())
-plt.title(titles[i])
-
-plt.show()
-"""

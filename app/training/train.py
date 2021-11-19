@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from app.controllers.FeaturesCalculator import FeaturesCalculator
+from app.training.utils.FeaturesCalculator import FeaturesCalculator
 from app.model.Flow import Flow
 import csv
 import http
@@ -14,12 +14,13 @@ DPID = "1"
 TARGET_IP = "137.204.10.100"
 f = open('dataset.csv', 'w')
 writer = csv.writer(f)
-
+API_IP = "localhost"
+API_PORT = "8080"
 
 # Delete all flow entries and add Packet In flow
 def del_flows_add_packet_in():
     # Clear all flow entries
-    conn = http.client.HTTPConnection("localhost", 8080)
+    conn = http.client.HTTPConnection(API_IP, API_PORT)
     conn.request("DELETE", "/stats/flowentry/clear/" + DPID)
    
     # Add packet in
@@ -33,7 +34,7 @@ def del_flows_add_packet_in():
             "port": "CONTROLLER"
         }]
     })
-    conn = http.client.HTTPConnection("localhost", 8080)
+    conn = http.client.HTTPConnection(API_IP, API_PORT)
     conn.request("POST", "/stats/flowentry/add", packet_in_flow)
 
 
@@ -59,7 +60,7 @@ def build_dataset():
         time.sleep(SAMPLING_PERIOD)
 
         # Get all flows
-        conn = http.client.HTTPConnection("localhost", 8080)
+        conn = http.client.HTTPConnection(API_IP, API_PORT)
         conn.request("GET", "/stats/flow/" + DPID)
         response = conn.getresponse()
 

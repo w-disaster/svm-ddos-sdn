@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from queue import Queue
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from app.controllers.DDoSControllerThread1 import DDoSControllerThread
+from app.controllers.DDoSControllerThread import DDoSControllerThread
 from app.model.Features import Feature
 from app.model.TrafficState import TrafficState
 import matplotlib.dates as mdates

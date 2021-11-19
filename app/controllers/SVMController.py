@@ -4,7 +4,7 @@ from app.model.TrafficState import TrafficState
 
 class SVMController:
     def __init__(self):
-        self.filename = '../training/model.sav'
+        self.filename = '../training/classifier/model.sav'
         self.clf = joblib.load(self.filename)
         
     def predict(self, features):
