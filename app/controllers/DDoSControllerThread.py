@@ -2,7 +2,7 @@ import http.client
 import time
 import json
 from datetime import datetime
-from app.controllers.FeaturesCalculator import FeaturesControllerTraining
+from app.training.utils.FeaturesCalculator import FeaturesControllerTraining
 from app.controllers.SVMController import SVMController
 from app.model.State import State
 from app.model.Data import Data
