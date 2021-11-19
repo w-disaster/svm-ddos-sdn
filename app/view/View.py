@@ -1,13 +1,14 @@
 import threading
 import tkinter
-from tkinter import Tk, Label
+from tkinter import Tk
 from matplotlib import pyplot as plt
 from queue import Queue
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from app.controllers.DDoSController import DDoSController
-from app.model.State import State
+from app.controllers.DDoSControllerThread1 import DDoSControllerThread
 from app.model.Features import Feature
+from app.model.TrafficState import TrafficState
+import matplotlib.dates as mdates
 
 """
     View class.
@@ -21,7 +22,6 @@ class View:
     def __init__(self):
         # Blocking queue
         self.queue = Queue()
-
         # Init arrays
         self.timestamps = []
         self.features = [[], [], [], [], []]
@@ -30,14 +30,14 @@ class View:
     Start controller thread
     """
     def start_controller(self):
-        controller = DDoSController(queue=self.queue)
+        controller = DDoSControllerThread(queue=self.queue)
         c_thread = threading.Thread(target=controller.run, daemon=True)
         c_thread.start()
 
     """
     Start view by creating a Tkinter window and running the receiving thread
     """
-    def start(self):
+    def init_GUI(self):
         # Tkinter
         root = Tk()
         root.title('DDoS protect')
@@ -45,7 +45,7 @@ class View:
         root.geometry("1700x1000")
 
         # Add traffic state label on top
-        label = Label(root, text="", bg="grey", fg="white", font=("monospace", 16), width=20, height=3)
+        label = tkinter.Label(root, text="", bg="grey", fg="white", font=("monospace", 16), width=20, height=3)
         label.pack(pady=(30, 0))
 
         # Add figure with plots
@@ -64,6 +64,10 @@ class View:
                 k += 1
             ax[i].title.set_text(v.value)
             ax[i].grid()
+
+            ax[i].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+            plt.setp(ax[i].get_xticklabels(), rotation=15)
+            plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
 
         # Pack the figure
         graph = FigureCanvasTkAgg(fig, master=root)
@@ -84,8 +88,8 @@ class View:
             data = self.queue.get()
 
             # Update label text and colour
-            state = data.get_traffic_state()
-            label.config(text=state.name, bg="green" if state == State.NORMAL else "red")
+            traffic_state = data.get_traffic_state()
+            label.config(text=traffic_state.name, bg="green" if traffic_state == TrafficState.NORMAL else "red")
 
             # Get the timestamp and append it into the array
             timestamp = data.get_timestamp()
@@ -93,15 +97,17 @@ class View:
             self.timestamps = self.timestamps[-50:]
 
             # Get the features and plot them into the corresponding chart
-            for i, (label, value) in enumerate(data.get_features().get_features_as_array()):
+            for i, (l, value) in enumerate(data.get_features().get_features_as_array()):
                 ax[i].cla()
                 ax[i].grid()
                 # Append features data
                 self.features[i].append(value)
                 self.features[i] = self.features[i][-50:]
-                ax[i].title.set_text(label.value)
+                ax[i].title.set_text(l.value)
 
                 # Plot data
+                ax[i].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                plt.setp(ax[i].get_xticklabels(), rotation=15)
                 ax[i].plot(self.timestamps, self.features[i], marker='o', color='orange')
                 graph.draw()
 
@@ -111,4 +117,4 @@ if __name__ == "__main__":
     # Start controller thread
     view.start_controller()
     # Start view
-    view.start()
+    view.init_GUI()
