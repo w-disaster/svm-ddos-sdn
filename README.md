@@ -56,7 +56,7 @@ ryu-manager --ofp-tcp-listen-port 6633 c2.py ofctl_rest.py
 Start the topology in the guest in order to maintain CPU resources when the attack occurs and run normal traffic script:
 
 ```
-sudo mn --custom mn ddos topology.py --switch ovsk \
+sudo mn --custom mn_ddos_topology.py --switch ovsk \
   --controller=remote,ip=192.168.1.17:6653 \
   --controller=remote,ip=192.168.1.17:6633 --topo ddostopo
 ```
