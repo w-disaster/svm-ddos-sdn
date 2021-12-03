@@ -1,4 +1,4 @@
-# svm-ddos-sdn
+# SVM-DDoS-SDN
 
 ## DDoS attacks detection using SVM and mitigation in a Software-Defined Network.
 
