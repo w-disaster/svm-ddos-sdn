@@ -45,7 +45,7 @@ Start the controllers in the host:
 
 C1: 
 ``` 
-ryu-manager ryu-manager --ofp-tcp-listen-port 6653 c1.py
+ryu-manager --ofp-tcp-listen-port 6653 c1.py
 ```
 
 C2: 
