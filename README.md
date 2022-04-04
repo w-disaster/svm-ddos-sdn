@@ -1,9 +1,11 @@
 # SVM-DDoS-SDN
 
-## DDoS attacks detection using SVM and mitigation in a Software-Defined Network.
+## DDoS attacks detection based on SVM and mitigation in a Software-Defined Network.
 
 Starting from the build of the network topology using Mininet, I make use of the the Ryu ofctl rest API (https://ryu.readthedocs.io/en/latest/app/ofctl_rest.html) 
 to aggregate flows from Open vSwitch switches, delete them and add new ones.
+
+Link to the thesis: https://amslaurea.unibo.it/24691/
 
 ### Training
 
