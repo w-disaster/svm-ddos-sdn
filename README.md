@@ -6,6 +6,7 @@ Starting from the build of the network topology using Mininet, I make use of the
 to aggregate flows from Open vSwitch switches, delete them and add new ones.
 
 Link to the thesis: https://amslaurea.unibo.it/24691/
+Link to the demo: https://vimeo.com/717210915
 
 ### Training
 
@@ -68,3 +69,7 @@ sudo bash gen_traffic.sh 137.204.10.100
 
 
 In conclusion, start the application.
+
+### License
+svm-ddos-sdn was created by Luca Fabri and is licensed under the [CC BY-NC-SA 4.0](LICENSE-CC-BY-NC-SA).
+
